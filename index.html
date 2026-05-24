@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>Bastusjön</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(to bottom, #87ceeb, #dff6ff);
+      font-family: system-ui;
+      color: #083344;
+    }
+
+    .card {
+      background: rgba(255,255,255,.8);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 32px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,.15);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+    }
+
+    .temp {
+      font-size: 6rem;
+      font-weight: 700;
+      margin: 1rem 0;
+    }
+
+    .updated {
+      opacity: .7;
+      font-size: .95rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🌊 Bastusjön</h1>
+
+  <div class="temp" id="temp">
+    -- °C
+  </div>
+
+  <div class="updated" id="updated">
+    Hämtar temperatur...
+  </div>
+</div>
+
+<script>
+async function loadTemperature() {
+  try {
+    const response =
+      await fetch("temp.json?t=" + Date.now());
+
+    const data = await response.json();
+
+    document.getElementById("temp").textContent =
+      data.temperature.toFixed(1) + " °C";
+
+    document.getElementById("updated").textContent =
+      "Uppdaterad " +
+      new Date(data.updated)
+        .toLocaleString("sv-SE");
+
+  } catch (e) {
+    document.getElementById("updated").textContent =
+      "Kunde inte hämta temperatur";
+  }
+}
+
+loadTemperature();
+
+setInterval(loadTemperature, 30000);
+</script>
+
+</body>
+</html>
