@@ -1,89 +1,163 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bastusjön</title>
 
   <style>
+    :root {
+      --bg1: #dff7ff;
+      --bg2: #7cc7df;
+      --card: rgba(255, 255, 255, 0.82);
+      --text: #073044;
+      --muted: #4d6b78;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      height: 100vh;
-      display: grid;
-      place-items: center;
-      background:
-        linear-gradient(to bottom, #87ceeb, #dff6ff);
-      font-family: system-ui;
-      color: #083344;
+      min-height: 100svh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
     }
 
     .card {
-      background: rgba(255,255,255,.8);
-      backdrop-filter: blur(10px);
-      padding: 3rem;
+      background: var(--card);
       border-radius: 32px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,.15);
+      padding: 32px 24px;
+      box-shadow: 0 20px 50px rgba(0, 55, 80, 0.18);
+      backdrop-filter: blur(14px);
+    }
+
+    .logo {
+      font-size: 2.4rem;
+      margin-bottom: 8px;
     }
 
     h1 {
-      margin-top: 0;
+      margin: 0;
       font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .label {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     .temp {
-      font-size: 6rem;
-      font-weight: 700;
-      margin: 1rem 0;
+      margin: 8px 0 4px;
+      font-size: clamp(5rem, 24vw, 7rem);
+      font-weight: 750;
+      letter-spacing: -0.08em;
+      line-height: 1;
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 1.15rem;
+      font-weight: 600;
     }
 
     .updated {
-      opacity: .7;
-      font-size: .95rem;
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .error {
+      color: #8a1f1f;
+    }
+
+    footer {
+      margin-top: 18px;
+      color: rgba(7, 48, 68, 0.65);
+      font-size: 0.85rem;
     }
   </style>
 </head>
+
 <body>
+  <main>
+    <section class="card">
+      <div class="logo">🌊</div>
+      <h1>Bastusjön</h1>
 
-<div class="card">
-  <h1>🌊 Bastusjön</h1>
+      <div class="label">Vattentemperatur</div>
+      <div class="temp" id="temp">--°</div>
 
-  <div class="temp" id="temp">
-    -- °C
-  </div>
+      <div class="status" id="status">Hämtar temperatur...</div>
+      <div class="updated" id="updated"></div>
+    </section>
 
-  <div class="updated" id="updated">
-    Hämtar temperatur...
-  </div>
-</div>
+    <footer>Live från Bastusjön</footer>
+  </main>
 
-<script>
-async function loadTemperature() {
-  try {
-    const response =
-      await fetch("temp.json?t=" + Date.now());
+  <script>
+    function getStatus(temp) {
+      if (temp < 10) return "🥶 Iskallt";
+      if (temp < 15) return "Friskt bad";
+      if (temp < 18) return "Svalt men badbart";
+      if (temp < 22) return "Skönt badvatten";
+      return "☀️ Perfekt badtemperatur";
+    }
 
-    const data = await response.json();
+    function timeAgo(dateString) {
+      const date = new Date(dateString);
+      const minutes = Math.round((Date.now() - date.getTime()) / 60000);
 
-    document.getElementById("temp").textContent =
-      data.temperature.toFixed(1) + " °C";
+      if (minutes < 1) return "nyss";
+      if (minutes === 1) return "för 1 minut sedan";
+      if (minutes < 60) return `för ${minutes} minuter sedan`;
 
-    document.getElementById("updated").textContent =
-      "Uppdaterad " +
-      new Date(data.updated)
-        .toLocaleString("sv-SE");
+      const hours = Math.round(minutes / 60);
+      if (hours === 1) return "för 1 timme sedan";
+      return `för ${hours} timmar sedan`;
+    }
 
-  } catch (e) {
-    document.getElementById("updated").textContent =
-      "Kunde inte hämta temperatur";
-  }
-}
+    async function loadTemperature() {
+      try {
+        const response = await fetch("temp.json?t=" + Date.now());
+        const data = await response.json();
 
-loadTemperature();
+        const temp = Number(data.temperature);
 
-setInterval(loadTemperature, 30000);
-</script>
+        document.getElementById("temp").textContent =
+          `${temp.toFixed(1)}°`;
 
+        document.getElementById("status").textContent =
+          getStatus(temp);
+
+        document.getElementById("updated").textContent =
+          `Uppdaterad ${timeAgo(data.updated)}`;
+      } catch (error) {
+        document.getElementById("status").textContent =
+          "Kunde inte hämta temperatur";
+
+        document.getElementById("status").classList.add("error");
+      }
+    }
+
+    loadTemperature();
+    setInterval(loadTemperature, 30000);
+  </script>
 </body>
 </html>
